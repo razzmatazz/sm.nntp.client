@@ -92,5 +92,10 @@ public class StringUtil {
 		
 		return stringList;
 	}
+
+	public static String validateNewsgroupNameOrException(String name) {
+		// TODO check for control chars, spaces or non-ascii chars
+		return name;
+	}
 	
 }
