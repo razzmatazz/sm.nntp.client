@@ -18,15 +18,21 @@ public class NntpCommandStream {
 		this.output = output;
 		this.inspector = inspector;
 	}
-
-	public ResponseHeader readResponseHeaderOrExceptionOnError() throws IOException {
+	
+	public ResponseHeader readResponseHeader() throws IOException {
 		String line = readCrLfTerminatedLine();
 		String[] parts = StringUtil.splitLineIntoWordAndRemainder(line);
 		
 		int responseStatusCode = Integer.parseInt(parts[0]);
-		String responseStatusString = parts[1];
 		
-		ResponseHeader header = new ResponseHeader(line, responseStatusCode, responseStatusString);
+		// response status string is the rest after status code, sans \r\n
+		String responseStatusString = parts[1].substring(0, parts[1].length() - 2);
+		
+		return new ResponseHeader(line, responseStatusCode, responseStatusString); 
+	}
+
+	public ResponseHeader readResponseHeaderOrExceptionOnError() throws IOException {
+		ResponseHeader header = readResponseHeader();
 		header.throwExceptionOnErrorStatusCode();
 		return header;
 	}
