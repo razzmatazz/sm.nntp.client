@@ -1,8 +1,6 @@
 package sm.nntp.client.internal.commands;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import sm.nntp.client.NewsgroupStatus;
 import sm.nntp.client.internal.NntpCommandStream;
