@@ -7,6 +7,7 @@ import java.util.List;
 import sm.nntp.client.ArticleId;
 import sm.nntp.client.NewsgroupStatus;
 import sm.nntp.client.NntpServerError;
+import sm.nntp.client.internal.LineOutputStream;
 import sm.nntp.client.internal.NntpCommandStream;
 import sm.nntp.client.internal.StringUtil;
 
@@ -34,11 +35,21 @@ public class CommandResponseHelpers {
 	protected static Iterable<NewsgroupStatus> parseNewsgroupListResponseFrom(
 			NntpCommandStream cmdStream
 			) throws IOException {
-		List<NewsgroupStatus> newsgroups = new ArrayList<NewsgroupStatus>();
+		final List<NewsgroupStatus> newsgroups = new ArrayList<NewsgroupStatus>();
 		
-		for(String line: cmdStream.readResponseTextContentAsLines()) {
-			newsgroups.add(parseNewsgroupStatusLine(line));
-		}
+		cmdStream.readResponseTextContentAsLinesInto(new LineOutputStream() {
+			@Override public void onLine(String line) {
+				try {
+					newsgroups.add(parseNewsgroupStatusLine(line));
+				}
+				catch(Exception ex) {
+					// TODO: dunno if this is correct to continue as we have received invalid data from the server, we should terminate this somehow
+				}
+			}
+
+			@Override public void onBegin() {}
+			@Override public void onFinish() {}
+		});
 		
 		return newsgroups;
 	}

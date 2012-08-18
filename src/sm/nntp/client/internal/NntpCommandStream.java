@@ -7,8 +7,6 @@ import sm.nntp.client.NntpConnectionError;
 import sm.nntp.client.NntpStreamInspector;
 
 public class NntpCommandStream {
-	private static final String NntpResponseTerminatorLine = ".\r\n";
-	
 	private InputStream input;
 	private OutputStream output;
 	private NntpStreamInspector inspector;
@@ -23,12 +21,8 @@ public class NntpCommandStream {
 		String line = readCrLfTerminatedLine();
 		String[] parts = StringUtil.splitLineIntoWordAndRemainder(line);
 		
-		int responseStatusCode = Integer.parseInt(parts[0]);
-		
-		// response status string is the rest after status code, sans \r\n
-		String responseStatusString = parts[1].substring(0, parts[1].length() - 2);
-		
-		return new ResponseHeader(line, responseStatusCode, responseStatusString); 
+		int responseStatusCode = Integer.parseInt(parts[0]);		
+		return new ResponseHeader(line, responseStatusCode, parts[1]); 
 	}
 
 	public ResponseHeader readResponseHeaderOrExceptionOnError() throws IOException {
@@ -37,21 +31,22 @@ public class NntpCommandStream {
 		return header;
 	}
 	
-	private String readDotTerminatedInput() throws IOException {
-		StringBuffer input = new StringBuffer();
+	public void readResponseTextContentAsLinesInto(LineOutputStream stream) throws IOException {
+		
+		stream.onBegin();
 		
 		while (true) {
 			String line = readCrLfTerminatedLine();
-			if (line.equals(NntpResponseTerminatorLine))
+			if (line.equals("."))
 				break;
 			
 			if (line.startsWith(".."))
 				line = line.substring(1);
 			
-			input.append(line);
+			stream.onLine(line);
 		}
 		
-		return input.toString();
+		stream.onFinish();
 	}
 
 	private String readCrLfTerminatedLine() throws IOException {
@@ -87,12 +82,10 @@ public class NntpCommandStream {
 			}
 		}
 		
-		inspector.onInputLine(line.toString());
+		String lineAsString = line.toString();
 		
-		line.append((char)0x0d);
-		line.append((char)0x0a);
-		
-		return line.toString();
+		inspector.onInputLine(lineAsString);
+		return lineAsString;
 	}
 	
 	public void writeCommand(String command) throws IOException {
@@ -118,10 +111,4 @@ public class NntpCommandStream {
 		
 		output.write(bytes, 0, index);
 	}
-
-	public Iterable<String> readResponseTextContentAsLines() throws IOException {
-		String content = readDotTerminatedInput();
-		return StringUtil.splitIntoCrLfTerminatedLines(content);
-	}
-
 }

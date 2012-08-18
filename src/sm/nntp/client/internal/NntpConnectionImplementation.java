@@ -2,12 +2,11 @@ package sm.nntp.client.internal;
 
 import java.io.IOException;
 
+
 import java.net.Socket;
 import java.util.Date;
 
-import sm.nntp.client.ArticleCursor;
-import sm.nntp.client.ArticleId;
-import sm.nntp.client.ArticleRetrievalPredicate;
+import sm.nntp.client.ArticleVisitor;
 import sm.nntp.client.NewsgroupStatus;
 import sm.nntp.client.NntpConnection;
 import sm.nntp.client.NntpStreamInspector;
@@ -76,22 +75,11 @@ public class NntpConnectionImplementation implements NntpConnection {
 	}
 
 	@Override
-	public ArticleCursor fetchArticlesForNewsgroup(String name, ArticleRetrievalPredicate articlePredicate)
+	public void visitArticlesInNewsgroup(String name, ArticleVisitor visitor)
 			throws IOException {
 		ensureSetupDone();
 		
-		if (articlePredicate == null) {
-			articlePredicate = new ArticleRetrievalPredicate() {				
-				@Override public boolean consider(ArticleId articleId) { return true; }
-				@Override public boolean retrieveHeadersFor(ArticleId articleId) { return true; }
-				@Override public boolean retrieveBodyFor(ArticleId articleId) { return true; }
-			};
-		}
-		
-		ArticleCursorImplementationForAllArticlesInNewsgroup cursor
-			= new ArticleCursorImplementationForAllArticlesInNewsgroup(name, articlePredicate);
-		
-		cursor.startOn(cmdStream);
-		return cursor;
+		new ArticleInspectorOnNewsgroup(name)
+			.inspectWithVisitorOn(cmdStream, visitor);
 	}
 }
