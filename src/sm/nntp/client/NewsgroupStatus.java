@@ -25,4 +25,11 @@ public class NewsgroupStatus {
 	public boolean isPostingAllowed() {
 		return isPostingAllowedFlag;
 	}
+
+	public int getEstimatedCountOfArticles() {
+		if (lowArticleNum >= 0 && highArticleNum > lowArticleNum)
+			return highArticleNum - lowArticleNum;
+		else
+			return 0;
+	}
 }
