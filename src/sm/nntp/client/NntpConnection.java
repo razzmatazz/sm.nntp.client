@@ -1,87 +1,27 @@
 package sm.nntp.client;
 
 import java.io.Closeable;
-
 import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Date;
 
-import sm.nntp.client.internal.NntpCommandStream;
-import sm.nntp.client.internal.commands.ListNewNewsgroupsCommand;
-import sm.nntp.client.internal.commands.ListNewsgroupsCommand;
-import sm.nntp.client.internal.commands.ServerHelloCommand;
+public interface NntpConnection extends Closeable {
 
-public class NntpConnection implements Closeable {
-	
-	private Socket socket;
-	private boolean setupDone;
-	private NntpCommandStream cmdStream;
-	private ServerHelloCommand helloCommand;
-	private NntpStreamInspector nntpInspector;
+	public Iterable<NewsgroupStatus> fetchListOfAllNewsgroups()
+			throws IOException;
 
-	public NntpConnection(NntpStreamInspector inspector) {
-		nntpInspector = inspector;
-	}
-	
-	public void setupOnSocket(Socket socket) throws IOException {
-		if (setupDone)
-			throw new IllegalStateException("connection is already set up");
-		
-		this.socket = socket;
-		cmdStream = new NntpCommandStream(socket.getInputStream(), socket.getOutputStream(), nntpInspector);
-		setupDone = true;
-		
-		helloCommand = new ServerHelloCommand();
-		helloCommand.executeOn(cmdStream);
-	}
-	
-	public void close() {
-		ensureSetupDone();
-		
-		try {
-			socket.close();
-		} catch (IOException e) {
-			// ignore any errors when closing connections
-		}
-		
-		setupDone = false;
-	}
-	
-	private void ensureSetupDone() {
-		if (!setupDone)
-			throw new IllegalStateException("not connected");
-	}
+	public Iterable<NewsgroupStatus> fetchListOfNewsgroupsPublishedSince(
+			Date since) throws IOException;
 
-	public Iterable<NewsgroupStatus> fetchListOfAllNewsgroups() throws IOException {
-		ensureSetupDone();
-		return new ListNewsgroupsCommand().executeOn(cmdStream);
-	}
-	
-	public Iterable<NewsgroupStatus> fetchListOfNewsgroupsPublishedSince(Date since) throws IOException {
-		ensureSetupDone();		
-		return new ListNewNewsgroupsCommand(since).executeOn(cmdStream);
-	}
-	
-	public Iterable<ArticleHeader> fetchArticleHeadersForNewsgroup(String newsgroup) {
-		throw new UnsupportedOperationException();
-	}
-	
+	public Iterable<ArticleHeader> fetchArticleHeadersForNewsgroup(
+			String newsgroup) throws IOException;
+
 	public Iterable<String> fetchMessageIdsForArticlesInNewsgroupPostedSince(
-			String newsgroup,
-			Date since) {
-		throw new UnsupportedOperationException();
-	}
-	
-	public Iterable<String> fetchMessageIdsForArticlesPostedSince(Date since) {
-		throw new UnsupportedOperationException();
-	}
-		
-	public ArticleHeader fetchArticleHeaderForMessageId(String messageId) {
-		throw new UnsupportedOperationException();
-	}
-	
-	public Article fetchArticleByMessageId(String messageId) {
-		throw new UnsupportedOperationException();
-	}
+			String newsgroup, Date since) throws IOException;
+
+	public Iterable<String> fetchMessageIdsForArticlesPostedSince(Date since) throws IOException;
+
+	public ArticleHeader fetchArticleHeaderForMessageId(String messageId) throws IOException;
+
+	public Article fetchArticleByMessageId(String messageId) throws IOException;
+
 }

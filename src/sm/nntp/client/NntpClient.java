@@ -4,6 +4,7 @@ package sm.nntp.client;
 import java.io.IOException;
 import java.net.Socket;
 
+import sm.nntp.client.internal.NntpConnectionImplementation;
 import sm.nntp.client.internal.NullInspector;
 
 public class NntpClient {
@@ -22,7 +23,7 @@ public class NntpClient {
 	}
 	
 	public NntpConnection connectTo(String hostname, int port) throws IOException {
-		NntpConnection connection = new NntpConnection(inspectorToUse);
+		NntpConnectionImplementation connection = new NntpConnectionImplementation(inspectorToUse);
 		connection.setupOnSocket(new Socket(hostname, port));
 		return connection;
 	}
