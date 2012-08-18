@@ -13,13 +13,11 @@ public class ArticleVisitorDefaultImpl implements ArticleVisitor {
 	}
 
 	@Override
-	public boolean inArticleBody(ArticleId articleId) {
-		return true;
+	public void inArticleBody(ArticleId articleId) {
 	}
 
 	@Override
-	public boolean onArticleBodyLine(ArticleId articleId, String bodyLine) {
-		return true;
+	public void onArticleBodyLine(ArticleId articleId, String bodyLine) {
 	}
 
 	@Override
@@ -28,18 +26,16 @@ public class ArticleVisitorDefaultImpl implements ArticleVisitor {
 	}
 
 	@Override
-	public boolean inArticleHeaders(ArticleId articleId) {
-		return true;
+	public void inArticleHeaders(ArticleId articleId) {
 	}
 
 	@Override
-	public boolean onArticleHeadersLine(ArticleId articleId, String headersLine) {
-		return true;
+	public void onArticleHeadersLine(ArticleId articleId, String headersLine) {
 	}
 
 	@Override
-	public boolean outOfArticleHeaders(ArticleId articleId) {
-		return true;
+	public ArticleVisitorResponse outOfArticleHeaders(ArticleId articleId) {
+		return ArticleVisitorResponse.WANT_BODY;
 	}
 
 	@Override

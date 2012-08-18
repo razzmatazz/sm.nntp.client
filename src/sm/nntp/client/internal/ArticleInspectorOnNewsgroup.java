@@ -80,55 +80,115 @@ public class ArticleInspectorOnNewsgroup {
 		
 		if (continueVisiting)
 		{
-			if (wantBody && wantHeaders)
-				new ArticleCommand().executeOn(cmdStream, mapHeaderLineOutputTo(articleId, visitor), mapBodyLineOutputTo(articleId, visitor));
-			else if (wantBody)
-				new HeadCommand().executeOn(cmdStream, mapBodyLineOutputTo(articleId, visitor));
-			else if (wantHeaders)
-				new BodyCommand().executeOn(cmdStream, mapHeaderLineOutputTo(articleId, visitor));
+			LineStreamOutputMapperToArticleHeaders headerOutput
+				= new LineStreamOutputMapperToArticleHeaders(articleId, visitor, resp);
+			
+			LineStreamOutputMapperToArticleBody bodyOutput
+				= new LineStreamOutputMapperToArticleBody(articleId, visitor, headerOutput);
+			
+			if (wantBody && wantHeaders) {
+				new ArticleCommand().executeOn(cmdStream, headerOutput, bodyOutput);
+			}
+			else {
+				if (wantHeaders) {
+					new HeadCommand().executeOn(cmdStream, headerOutput);
+					
+					// it can be that after visitor.outOfArticleHeaders() we get a wish to
+					// get the body, after all 
+					wantBody = wantBody || headerOutput.getVisitorResponseSaysItWantsBody();
+				}
+				
+				// it can be that after visitor.outOfArticleHeaders() we get a wish to
+				// get the body, after all
+				if (wantBody) {
+					new BodyCommand().executeOn(cmdStream, bodyOutput);
+				}
+			}
+			
+			continueVisiting = continueVisiting
+						&& headerOutput.getContinueVisiting()
+						&& bodyOutput.getContinueVisiting();
 		}
 		
 		return continueVisiting && visitor.outOfArticle(articleId);
 	}
 
-	private LineOutputStream mapBodyLineOutputTo(final ArticleId articleId,
-			final ArticleVisitor visitor) {
-		return new LineOutputStream() {
-			@Override
-			public void onLine(String line) {
-				visitor.onArticleBodyLine(articleId, line);
-			}
-			
-			@Override
-			public void onFinish() {
-				visitor.outOfArticleBody(articleId);
-			}
-			
-			@Override
-			public void onBegin() {
-				visitor.inArticleBody(articleId);
-			}
-		};
+	private class LineStreamOutputMapperToArticleHeaders implements LineOutputStream {
+		private ArticleVisitorResponse visitorResponse;
+		private ArticleId articleId;
+		private ArticleVisitor visitor;
+
+		public LineStreamOutputMapperToArticleHeaders(ArticleId articleId,
+				ArticleVisitor visitor,
+				ArticleVisitorResponse assumedVisitorResponse) {
+			this.articleId = articleId;
+			this.visitor = visitor;
+			this.visitorResponse = assumedVisitorResponse;
+		}
+
+		public boolean getContinueVisiting() {
+			return visitorResponse != ArticleVisitorResponse.TERMINATE;
+		}
+
+		public boolean getVisitorResponseSaysItWantsBody() {
+			return visitorResponse == ArticleVisitorResponse.WANT_BODY
+					|| visitorResponse == ArticleVisitorResponse.WANT_BODY_AND_HEADERS;
+		}
+
+		@Override
+		public void onBegin() {
+			visitor.inArticleHeaders(articleId);
+		}
+
+		@Override
+		public void onLine(String line) {
+			visitor.onArticleHeadersLine(articleId, line);
+		}
+		
+		@Override
+		public void onFinish() {
+			visitorResponse = visitor.outOfArticleHeaders(articleId);
+		}
 	}
 
-	private LineOutputStream mapHeaderLineOutputTo(final ArticleId articleId,
-			final ArticleVisitor visitor) {
-		return new LineOutputStream() {
-			@Override
-			public void onLine(String line) {
-				visitor.onArticleHeadersLine(articleId, line);
-			}
-			
-			@Override
-			public void onFinish() {
-				visitor.outOfArticleHeaders(articleId);
-			}
-			
-			@Override
-			public void onBegin() {
-				visitor.inArticleHeaders(articleId);
-			}
-		};
+	private class LineStreamOutputMapperToArticleBody implements LineOutputStream {
+		private ArticleId articleId;
+		private ArticleVisitor visitor;
+		private boolean continueVisiting;
+		private LineStreamOutputMapperToArticleHeaders headerOutput;
+
+		public LineStreamOutputMapperToArticleBody(
+				ArticleId articleId,
+				ArticleVisitor visitor,
+				LineStreamOutputMapperToArticleHeaders headerOutput) {
+			this.articleId = articleId;
+			this.visitor = visitor;
+			this.continueVisiting = true;
+			this.headerOutput = headerOutput;
+		}
+
+		public boolean getContinueVisiting() {
+			return continueVisiting;
+		}
+
+		
+		@Override
+		public void onBegin() {
+			if (headerOutput.getVisitorResponseSaysItWantsBody())
+				visitor.inArticleBody(articleId);
+		}
+
+		@Override
+		public void onLine(String line) {
+			if (headerOutput.getVisitorResponseSaysItWantsBody())
+				visitor.onArticleBodyLine(articleId, line);
+		}
+		
+		@Override
+		public void onFinish() {
+			if (headerOutput.getVisitorResponseSaysItWantsBody())
+				continueVisiting = visitor.outOfArticleBody(articleId);
+		}
 	}
 
 }
