@@ -8,7 +8,7 @@ import sm.nntp.client.internal.NntpCommandStream;
 import sm.nntp.client.internal.ResponseHeader;
 import sm.nntp.client.internal.ResponseStatusType;
 
-public class ListNewNewsgroupsCommand extends NewsgroupsCommandBase {
+public class ListNewNewsgroupsCommand {
 	
 	private Date since;
 
@@ -23,7 +23,7 @@ public class ListNewNewsgroupsCommand extends NewsgroupsCommandBase {
 		ResponseHeader responseHdr = cmdStream.readResponseHeaderOrExceptionOnError();
 		responseHdr.ensureStatusCodeIsOfType(ResponseStatusType.CommandOK);
 		
-		return parseNewsgroupListResponseFrom(cmdStream);
+		return CommandResponseHelpers.parseNewsgroupListResponseFrom(cmdStream);
 	}
 
 }
