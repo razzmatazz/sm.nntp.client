@@ -9,7 +9,7 @@ import sm.nntp.client.internal.NntpCommandStream;
 import sm.nntp.client.internal.ResponseHeader;
 import sm.nntp.client.internal.ResponseStatusType;
 
-public class ListNewsgroupsCommand {
+public class ListNewsgroupsCommand extends NewsgroupsCommandBase {
 
 	public Iterable<NewsgroupStatus> executeOn(NntpCommandStream cmdStream) throws IOException {
 		cmdStream.writeCommand("list");
@@ -17,13 +17,6 @@ public class ListNewsgroupsCommand {
 		ResponseHeader header = cmdStream.readResponseHeaderOrExceptionOnError();
 		header.ensureStatusCodeIsOfType(ResponseStatusType.CommandOK);
 		
-		List<NewsgroupStatus> newsgroups = new ArrayList<NewsgroupStatus>();
-		
-		for(String line: cmdStream.readResponseTextContentAsLines()) {
-			newsgroups.add(new NewsgroupStatus(line, 0, 1, false));
-		}
-		
-		return newsgroups;
+		return parseNewsgroupListResponseFrom(cmdStream);
 	}
-
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import sm.nntp.client.internal.NntpCommandStream;
+import sm.nntp.client.internal.commands.ListNewNewsgroupsCommand;
 import sm.nntp.client.internal.commands.ListNewsgroupsCommand;
 import sm.nntp.client.internal.commands.ServerHelloCommand;
 
@@ -54,9 +55,12 @@ public class NntpConnection implements Closeable {
 
 	public Iterable<NewsgroupStatus> fetchListOfAllNewsgroups() throws IOException {
 		ensureSetupDone();
-		
-		ListNewsgroupsCommand listNewsGroupsCmd = new ListNewsgroupsCommand();
-		return listNewsGroupsCmd.executeOn(cmdStream);
+		return new ListNewsgroupsCommand().executeOn(cmdStream);
+	}
+	
+	public Iterable<NewsgroupStatus> fetchListOfNewsgroupsPublishedSince(Date since) throws IOException {
+		ensureSetupDone();		
+		return new ListNewNewsgroupsCommand(since).executeOn(cmdStream);
 	}
 	
 	public Iterable<ArticleHeader> fetchArticleHeadersForNewsgroup(String newsgroup) {
