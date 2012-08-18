@@ -76,5 +76,21 @@ public class StringUtil {
 		arr[1] = remainder.toString();
 		return arr;
 	}
+
+	public static List<String> splitLineIntoWords(String line) {
+		List<String> stringList = new ArrayList<String>();
+		
+		String remainder = line;
+		while (true) {
+			String[] headAndTail = splitLineIntoWordAndRemainder(remainder);
+			if (headAndTail[0].length() == 0)
+				break;
+			
+			stringList.add(headAndTail[0]);
+			remainder = headAndTail[1];
+		}
+		
+		return stringList;
+	}
 	
 }
