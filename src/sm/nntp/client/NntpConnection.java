@@ -17,8 +17,10 @@ public class NntpConnection implements Closeable {
 	private boolean setupDone;
 	private NntpCommandStream cmdStream;
 	private ServerHelloCommand helloCommand;
+	private NntpStreamInspector nntpInspector;
 
-	public NntpConnection() {
+	public NntpConnection(NntpStreamInspector inspector) {
+		nntpInspector = inspector;
 	}
 	
 	public void setupOnSocket(Socket socket) throws IOException {
@@ -26,7 +28,7 @@ public class NntpConnection implements Closeable {
 			throw new IllegalStateException("connection is already set up");
 		
 		this.socket = socket;
-		cmdStream = new NntpCommandStream(socket.getInputStream(), socket.getOutputStream());
+		cmdStream = new NntpCommandStream(socket.getInputStream(), socket.getOutputStream(), nntpInspector);
 		setupDone = true;
 		
 		helloCommand = new ServerHelloCommand();

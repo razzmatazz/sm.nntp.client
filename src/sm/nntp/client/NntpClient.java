@@ -4,8 +4,17 @@ package sm.nntp.client;
 import java.io.IOException;
 import java.net.Socket;
 
+import sm.nntp.client.internal.NullInspector;
+
 public class NntpClient {
+	private NntpStreamInspector inspectorToUse;
+
 	public NntpClient() {
+		inspectorToUse = new NullInspector();
+	}
+	
+	public void setNntpStreamInspectorToUse(NntpStreamInspector inspector) {
+		this.inspectorToUse = inspector;
 	}
 	
 	public NntpConnection connectTo(String hostname) throws IOException {
@@ -13,7 +22,7 @@ public class NntpClient {
 	}
 	
 	public NntpConnection connectTo(String hostname, int port) throws IOException {
-		NntpConnection connection = new NntpConnection();
+		NntpConnection connection = new NntpConnection(inspectorToUse);
 		connection.setupOnSocket(new Socket(hostname, port));
 		return connection;
 	}

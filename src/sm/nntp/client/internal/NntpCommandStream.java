@@ -4,16 +4,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import sm.nntp.client.NntpConnectionError;
+import sm.nntp.client.NntpStreamInspector;
 
 public class NntpCommandStream {
 	private static final String NntpResponseTerminatorLine = ".\r\n";
 	
 	private InputStream input;
 	private OutputStream output;
+	private NntpStreamInspector inspector;
 
-	public NntpCommandStream(InputStream input, OutputStream output) throws IOException {
+	public NntpCommandStream(InputStream input, OutputStream output, NntpStreamInspector inspector) throws IOException {
 		this.input = input;
 		this.output = output;
+		this.inspector = inspector;
 	}
 
 	public ResponseHeader readResponseHeaderOrExceptionOnError() throws IOException {
@@ -78,6 +81,8 @@ public class NntpCommandStream {
 			}
 		}
 		
+		inspector.onInputLine(line.toString());
+		
 		line.append((char)0x0d);
 		line.append((char)0x0a);
 		
@@ -102,6 +107,8 @@ public class NntpCommandStream {
 		
 		bytes[index++] = 0x0d;
 		bytes[index++] = 0x0a;
+		
+		inspector.onOutputLine(command);
 		
 		output.write(bytes, 0, index);
 	}
